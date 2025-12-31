@@ -1,6 +1,6 @@
 [
     {
-        "id": 1,
+        "id": 2,
         "title": "Mokhles Tools",
         "category": "Open Source",
         "description": "A utility toolkit for developers. Recently converted into a native Android application.",
@@ -8,5 +8,4 @@
         "logo": "assets/images/projects/mokhles.jpg",
         "link": "https://mokhles.xyz"
     }
-
 ]
