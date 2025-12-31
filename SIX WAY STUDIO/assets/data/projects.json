@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "title": "Cyphacore AI",
+        "category": "Web Application",
+        "description": "A futuristic AI integration platform featuring dark mode aesthetics and real-time data processing.",
+        "image": "assets/images/projects/cyphacore.jpg",
+        "logo": "",
+        "link": "#"
+    },
+    {
+        "id": 2,
+        "title": "Mokhles Tools",
+        "category": "Open Source",
+        "description": "A utility toolkit for developers. Recently converted into a native Android application.",
+        "image": "assets/images/projects/mokhles.jpg",
+        "logo": "assets/images/projects/mokhles.jpg",
+        "link": "https://mokhles.xyz"
+    }
+]

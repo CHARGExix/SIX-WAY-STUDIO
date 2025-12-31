@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Manager | SixWays Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" type="image/png" href="assets/images/icon.png">
+    
+    <style>
+        /* Specific Admin Styles */
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- DRAG & DROP UPLOAD ZONES --- */
+        .upload-zone {
+            width: 100%;
+            height: 160px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--neon-cyan);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .upload-zone img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            z-index: 2;
+        }
+
+        .upload-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .upload-placeholder strong {
+            display: block;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        input[type="file"] { display: none; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* List Items */
+        .project-item-mini {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 8px; }
+
+        .icon-btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .delete-btn:hover { background: rgba(239, 68, 68, 0.3); }
+
+        .edit-btn {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .edit-btn:hover { background: rgba(59, 130, 246, 0.3); }
+
+        .cancel-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border);
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+
+        .json-output {
+            width: 100%;
+            height: 300px;
+            background: #020617;
+            color: #22d3ee;
+            font-family: 'Consolas', monospace;
+            padding: 1rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            margin-top: 1rem;
+            resize: vertical;
+        }
+
+        .warning-note {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .admin-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="background-blobs"><div class="blob blob-2"></div></div>
+
+    <section style="padding-top: 120px;">
+        <h1 style="text-align: center;">Project <span class="highlight">Manager</span></h1>
+        <p style="text-align: center; margin-bottom: 3rem;">Create, Edit, and Generate JSON</p>
+
+        <div class="admin-layout">
+            <div class="glass-card">
+                <h3 id="form-title" style="margin-bottom: 1rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">Add New Project</h3>
+                
+                <div class="warning-note">
+                    <span style="font-size: 1.2rem;">💡</span>
+                    <span>
+                        <strong>Note:</strong> You still need to manually copy image files to <code>assets/images/projects/</code>.
+                    </span>
+                </div>
+
+                <form id="addProjectForm">
+                    <label>Project Title</label>
+                    <input type="text" id="p-title" class="form-input" placeholder="e.g. Super App" required>
+
+                    <label>Category</label>
+                    <input type="text" id="p-category" class="form-input" placeholder="e.g. Web App" required>
+
+                    <label>Description</label>
+                    <textarea id="p-desc" class="form-input" rows="3" placeholder="Short description..." required></textarea>
+
+                    <label>Project Cover Image</label>
+                    <input type="file" id="p-image-file" accept="image/*">
+                    <div class="upload-zone" id="drop-zone-main" onclick="document.getElementById('p-image-file').click()">
+                        <div class="upload-placeholder" id="placeholder-main">
+                            <strong style="font-size: 1.5rem;">+</strong>
+                            <strong>Click to Browse</strong>
+                        </div>
+                        <img id="preview-img-main" src="" style="display:none;">
+                    </div>
+                    <input type="hidden" id="p-image-path" value="assets/images/projects/">
+
+                    <label>Project Logo (Optional)</label>
+                    <input type="file" id="p-logo-file" accept="image/*">
+                    <div class="upload-zone" id="drop-zone-logo" onclick="document.getElementById('p-logo-file').click()" style="height: 100px;">
+                        <div class="upload-placeholder" id="placeholder-logo">
+                            <strong>Click to Browse Logo</strong>
+                        </div>
+                        <img id="preview-img-logo" src="" style="display:none;">
+                    </div>
+                    <input type="hidden" id="p-logo-path" value="">
+
+                    <label>Link URL</label>
+                    <input type="text" id="p-link" class="form-input" value="#">
+
+                    <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                        <button type="submit" id="submit-btn" class="cta-btn" style="width: 100%; border: none; cursor: pointer;">Add Project</button>
+                        <button type="button" id="cancel-btn" class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <div>
+                <div class="glass-card" style="margin-bottom: 2rem;">
+                    <h3>Current Projects</h3>
+                    <div id="current-list-container"></div>
+                </div>
+
+                <div class="glass-card">
+                    <h3>Final JSON Code</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Replace content in <code>assets/data/projects.json</code></p>
+                    <textarea id="final-json" class="json-output" readonly></textarea>
+                    <button onclick="copyToClipboard()" class="nav-btn" style="margin-top: 1rem; width: 100%; text-align: center; cursor: pointer;">Copy Code</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let projectsData = [];
+        let editingIndex = -1; // -1 means we are adding new, 0+ means we are editing
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const navRes = await fetch('../navbar.html');
+                document.getElementById('navbar-container').innerHTML = await navRes.text();
+                const res = await fetch('../assets/data/projects.json');
+                projectsData = await res.json();
+                renderList();
+                updateJSONBox();
+            } catch (err) {
+                console.error(err);
+                alert("Could not load data.");
+            }
+        });
+
+        // --- FILE HANDLING ---
+        function handleFile(file, imgId, placeholderId, hiddenInputId) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById(placeholderId).style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+                document.getElementById(hiddenInputId).value = "assets/images/projects/" + file.name;
+            }
+        }
+
+        function setupUploader(inputId, zoneId, imgId, placeholderId, hiddenInputId) {
+            const input = document.getElementById(inputId);
+            const zone = document.getElementById(zoneId);
+            input.addEventListener('change', (e) => handleFile(e.target.files[0], imgId, placeholderId, hiddenInputId));
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                handleFile(e.dataTransfer.files[0], imgId, placeholderId, hiddenInputId);
+            });
+        }
+        setupUploader('p-image-file', 'drop-zone-main', 'preview-img-main', 'placeholder-main', 'p-image-path');
+        setupUploader('p-logo-file', 'drop-zone-logo', 'preview-img-logo', 'placeholder-logo', 'p-logo-path');
+
+
+        // --- LIST RENDERER (With Edit Button) ---
+        function renderList() {
+            const container = document.getElementById('current-list-container');
+            container.innerHTML = '';
+
+            projectsData.forEach((p, index) => {
+                const div = document.createElement('div');
+                div.className = 'project-item-mini';
+                
+                const imgHtml = p.logo 
+                    ? `<img src="../${p.logo}" style="width:32px; height:32px; border-radius:6px; object-fit:cover;">` 
+                    : `<div style="width:32px; height:32px; background:rgba(255,255,255,0.1); border-radius:6px;"></div>`;
+                
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        ${imgHtml}
+                        <div>
+                            <strong style="font-size:0.95rem;">${p.title}</strong><br>
+                            <span style="font-size: 0.75rem; color: #aaa;">${p.category}</span>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="icon-btn edit-btn" onclick="startEdit(${index})">Edit</button>
+                        <button class="icon-btn delete-btn" onclick="removeProject(${index})">✕</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- EDIT LOGIC ---
+        window.startEdit = function(index) {
+            editingIndex = index;
+            const p = projectsData[index];
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Fill Form
+            document.getElementById('p-title').value = p.title;
+            document.getElementById('p-category').value = p.category;
+            document.getElementById('p-desc').value = p.description;
+            document.getElementById('p-link').value = p.link;
+            
+            // Handle Hidden Paths
+            document.getElementById('p-image-path').value = p.image;
+            document.getElementById('p-logo-path').value = p.logo;
+
+            // Show Previews (using the existing path)
+            if(p.image) {
+                const img = document.getElementById('preview-img-main');
+                img.src = "../" + p.image; // Add ../ so it works in admin folder
+                img.style.display = 'block';
+                document.getElementById('placeholder-main').style.display = 'none';
+            }
+            if(p.logo) {
+                const logo = document.getElementById('preview-img-logo');
+                logo.src = "../" + p.logo;
+                logo.style.display = 'block';
+                document.getElementById('placeholder-logo').style.display = 'none';
+            }
+
+            // Change UI State
+            document.getElementById('form-title').innerText = "Edit Project: " + p.title;
+            document.getElementById('submit-btn').innerText = "Update Project";
+            document.getElementById('submit-btn').style.background = "#2d5bff"; // Distinct color
+            document.getElementById('cancel-btn').style.display = "block";
+        }
+
+        window.cancelEdit = function() {
+            editingIndex = -1;
+            document.getElementById('addProjectForm').reset();
+            
+            // Reset UI
+            document.getElementById('form-title').innerText = "Add New Project";
+            document.getElementById('submit-btn').innerText = "Add Project";
+            document.getElementById('submit-btn').style.background = ""; // Reset color
+            document.getElementById('cancel-btn').style.display = "none";
+
+            // Reset Images
+            ['preview-img-main', 'preview-img-logo'].forEach(id => document.getElementById(id).style.display = 'none');
+            ['placeholder-main', 'placeholder-logo'].forEach(id => document.getElementById(id).style.display = 'block');
+            
+            // Reset Hidden Paths
+            document.getElementById('p-image-path').value = "assets/images/projects/";
+            document.getElementById('p-logo-path').value = "";
+        }
+
+        // --- FORM SUBMISSION (Add OR Update) ---
+        document.getElementById('addProjectForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const projectObj = {
+                id: editingIndex > -1 ? projectsData[editingIndex].id : Date.now(),
+                title: document.getElementById('p-title').value,
+                category: document.getElementById('p-category').value,
+                description: document.getElementById('p-desc').value,
+                image: document.getElementById('p-image-path').value,
+                logo: document.getElementById('p-logo-path').value,
+                link: document.getElementById('p-link').value
+            };
+
+            if (editingIndex > -1) {
+                // UPDATE EXISTING
+                projectsData[editingIndex] = projectObj;
+                cancelEdit(); // Exit edit mode
+            } else {
+                // ADD NEW
+                projectsData.push(projectObj);
+                cancelEdit(); // Just to clear form
+            }
+
+            renderList();
+            updateJSONBox();
+        });
+
+        window.removeProject = function(index) {
+            if(confirm('Delete project?')) {
+                // If we delete the one we are editing, cancel edit mode
+                if (index === editingIndex) cancelEdit();
+                
+                projectsData.splice(index, 1);
+                // Adjust editing index if we delete something above it
+                if (editingIndex > index) editingIndex--;
+                
+                renderList();
+                updateJSONBox();
+            }
+        }
+
+        function updateJSONBox() {
+            const jsonString = JSON.stringify(projectsData, null, 4);
+            document.getElementById('final-json').value = jsonString;
+        }
+
+        window.copyToClipboard = function() {
+            const copyText = document.getElementById("final-json");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(copyText.value);
+            alert("Code copied!");
+        }
+    </script>
+</body>
+</html>
