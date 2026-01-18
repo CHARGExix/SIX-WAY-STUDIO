@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // --- 0. PRELOADER (THE VOID) ---
     // Waits for all images, styles, and scripts to fully load before revealing the site
     window.addEventListener('load', () => {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`Could not load ${file}`);
             const data = await response.text();
             document.getElementById(id).innerHTML = data;
-            
+
             // Re-initialize scripts dependent on Navbar after it loads
             if (id === 'navbar-container') initMobileMenu();
         } catch (error) {
@@ -31,18 +31,35 @@ document.addEventListener('DOMContentLoaded', () => {
     loadComponent('footer-container', 'footer.html');
 
     // --- 2. MOBILE MENU LOGIC ---
+    // --- 2. MOBILE MENU LOGIC ---
     function initMobileMenu() {
-        const burger = document.querySelector('.burger');
-        const nav = document.querySelector('.nav-links');
-        
-        if (burger) {
-            burger.addEventListener('click', () => {
-                // Toggle Nav
-                nav.classList.toggle('nav-active');
-                // Burger Animation
-                burger.classList.toggle('toggle');
-            });
-        }
+        // Wait a small tick to ensure DOM is ready if called immediately after innerHTML
+        setTimeout(() => {
+            const burger = document.querySelector('.burger');
+            const nav = document.querySelector('.nav-links');
+            const navLinks = document.querySelectorAll('.nav-links li');
+
+            if (burger && nav) {
+                // Remove existing listeners to avoid duplicates if re-initialized
+                const newBurger = burger.cloneNode(true);
+                burger.parentNode.replaceChild(newBurger, burger);
+
+                newBurger.addEventListener('click', () => {
+                    // Toggle Nav
+                    nav.classList.toggle('nav-active');
+                    // Burger Animation
+                    newBurger.classList.toggle('toggle');
+                });
+
+                // Close menu when a link is clicked
+                navLinks.forEach((link, index) => {
+                    link.addEventListener('click', () => {
+                        nav.classList.remove('nav-active');
+                        newBurger.classList.remove('toggle');
+                    });
+                });
+            }
+        }, 100);
     }
 
     // --- 3. SCROLL REVEAL OBSERVER ---
@@ -75,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             projects.forEach((project, index) => {
                 // Calculate staggered delay (150ms per card)
-                const delay = index * 150; 
+                const delay = index * 150;
 
                 const card = document.createElement('div');
                 card.classList.add('glass-card', 'hidden');
@@ -126,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Append to grid
                 projectGrid.appendChild(card);
-                
+
                 // IMPORTANT: Tell the observer to watch this new element for animation
                 observer.observe(card);
             });
